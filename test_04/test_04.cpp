@@ -8,11 +8,11 @@
 
 using namespace cv;
 
-Mat calc_cdf(const Mat &input)
+Mat his2cdf(const Mat &input)
 {
 	Mat res(input);
 	
-	for (int i = 1; i < 256; i++)
+	for (int i = 1; i < input.rows; i++)
 	{
 		res.at<float>(i) = res.at<float>(i - 1) + input.at<float>(i);
 		
@@ -21,52 +21,77 @@ Mat calc_cdf(const Mat &input)
 	return res;
 }
 
-Mat calc_inv(const Mat &input)
+void cal_compose( InputArray _src, OutputArray _dst)
 {
+	int i = 0, j = 0;
+	Mat src = _src.getMat();
+	for (; i < src.rows; i++)
+	{
+		while(j < g.rows)
+		{
+			if (f.at<float>(i) <= g.at<float>(j))
+			{
+				h.at<float>(j) = f.at<float>(i);
+				break;
+			}
+			j++;
+		}
+	}
+};
 
-}
+//Mat calc_inv(const Mat &input)
+//{
+//	Mat res(input.at<float>(input.size()), 1,  CV_32F);
+//
+//
+//}
 
 int main(int argc, char** argv)
 {
 	char* src_imageName = argv[1];
+	char* tgt_imageName = argv[2];
 	int histSize = 256;
 	float range[] = { 0, 256 };
 	const float* histRange = { range };
 
-	Mat src_image;
+	Mat src_image, tgt_image;
 	src_image = imread(src_imageName, 1);
+	tgt_image = imread(tgt_imageName, 1);
 
-	if (argc != 2 || !src_image.data)
+	if (argc != 3 || !src_image.data)
 	{
 		printf(" No image data \n ");
 		return -1;
 	}
 
-	Mat gray_image;
-	cvtColor(src_image, gray_image, CV_BGR2GRAY);
+	Mat src_gray_image, tgt_gray_image;
+	cvtColor(src_image, src_gray_image, CV_BGR2GRAY);
+	cvtColor(tgt_image, tgt_gray_image, CV_BGR2GRAY);
 
-	imwrite("../../Images/gray_image.jpg", gray_image);
+	// imwrite("../../Images/gray_image.jpg", src_gray_image);
 
 	// calculate the gray level histogram.
-	Mat src_hist;
+	Mat src_hist, tgt_hist;
 	bool uniform = true; bool accumulate = false;
-	calcHist(&gray_image, 1, 0, Mat(), src_hist, 1, &histSize, &histRange, uniform, accumulate);
-	
+	calcHist(&src_gray_image, 1, 0, Mat(), src_hist, 1, &histSize, &histRange, uniform, accumulate);
+	calcHist(&tgt_gray_image, 1, 0, Mat(), tgt_hist, 1, &histSize, &histRange, uniform, accumulate);
+
+
 	int hist_w = 512; int hist_h = 400; // h is rows, w is column.
 	int bin_w = cvRound((double)hist_w / histSize);
 
-	Mat histImage(hist_h, hist_w, CV_8UC3, Scalar(0, 0, 0));
+	Mat src_histImage(hist_h, hist_w, CV_8UC3, Scalar(0, 0, 0));
 	// normalize(src_hist, src_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat());
-	std::cout << src_hist << std::endl;
+	// std::cout << src_hist.size() << std::endl;
 	
 	// compute cdf
-	Mat src_cdf = calc_cdf(src_hist);
-	// std::cout << gray_cdf << std::endl;
+	Mat src_cdf = his2cdf(src_hist);
+	Mat tgt_cdf = his2cdf(tgt_hist);
 
 	// draw gray level hist
 	for (int i = 1; i < histSize; i++)
 	{
-		line(histImage, Point(bin_w*(i - 1), hist_h - cvRound(src_hist.at<float>(i - 1))),
+		line(src_histImage, Point(bin_w*(i - 1), hist_h - cvRound(src_hist.at<float>(i - 1))),
 			Point(bin_w*(i), hist_h - cvRound(src_hist.at<float>(i))),
 			Scalar(255, 0, 0), 2, 8, 0);
 	}
@@ -74,9 +99,9 @@ int main(int argc, char** argv)
 	namedWindow(src_imageName, CV_WINDOW_AUTOSIZE);
 	namedWindow("Gray image", CV_WINDOW_AUTOSIZE);
 	
-	imshow("Gray Histogram", histImage);
+	imshow("Gray Histogram", src_histImage);
 	imshow(src_imageName, src_image);
-	imshow("Gray image", gray_image);
+	imshow("Gray image", src_gray_image);
 
 	waitKey(0);
 
