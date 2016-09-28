@@ -47,7 +47,6 @@ Mat cal_map(InputArray _src, InputArray _tgt)
 			dst.at<float>(i) = dst.at<float>(i - 1);
 		}
 	}
-	cout << dst << endl;
 	
 	return dst;
 }
