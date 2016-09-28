@@ -21,7 +21,7 @@ void on_trackbar(int, void*) {
 
 int main(int argc, char** argv) {
 	image = imread(argv[1], 1);
-	image_eq.create(image.rows, image.cols, CV_8UC3);
+	image_eq.create(image.rows, image.cols, CV_8UC1);
 
 	//separate channels, equalize histograms and them merge them
 	vector<Mat> channels, channels_eq;

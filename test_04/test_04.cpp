@@ -17,27 +17,9 @@ Mat his2cdf(const Mat &input)
 		res.at<float>(i) = res.at<float>(i - 1) + input.at<float>(i);
 		
 	}
-	std::cout << res << std::endl;
+	// std::cout << res << std::endl;
 	return res;
 }
-
-void cal_compose( InputArray _src, OutputArray _dst)
-{
-	int i = 0, j = 0;
-	Mat src = _src.getMat();
-	for (; i < src.rows; i++)
-	{
-		while(j < g.rows)
-		{
-			if (f.at<float>(i) <= g.at<float>(j))
-			{
-				h.at<float>(j) = f.at<float>(i);
-				break;
-			}
-			j++;
-		}
-	}
-};
 
 //Mat calc_inv(const Mat &input)
 //{
