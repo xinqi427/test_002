@@ -108,13 +108,15 @@ int main(int argc, char ** argv)
 	// Mat src_b, src_g, src_r, tgt_b, tgt_g, tgt_r;	
 	// calculate the hist for each channel
 	vector<Mat> src_hist, tgt_hist;
-	calcHist(&src_bgr[0], 1, 0, Mat(), src_hist[0], 1, &histSize, &histRange, uniform, accumulate);
-	calcHist(&src_bgr[1], 1, 0, Mat(), src_hist[1], 1, &histSize, &histRange, uniform, accumulate);
-	calcHist(&src_bgr[2], 1, 0, Mat(), src_hist[2], 1, &histSize, &histRange, uniform, accumulate);
-
-	calcHist(&tgt_bgr[0], 1, 0, Mat(), tgt_hist[0], 1, &histSize, &histRange, uniform, accumulate);
-	calcHist(&tgt_bgr[1], 1, 0, Mat(), tgt_hist[1], 1, &histSize, &histRange, uniform, accumulate);
-	calcHist(&src_bgr[2], 1, 0, Mat(), tgt_hist[2], 1, &histSize, &histRange, uniform, accumulate);
+	
+	for (int i = 0; i < src_bgr.size(); i++)
+	{
+		Mat src_ele, tgt_ele;
+		calcHist(&src_bgr[0], 1, 0, Mat(), src_ele, 1, &histSize, &histRange, uniform, accumulate);
+		src_hist.push_back(src_ele);
+		calcHist(&tgt_bgr[0], 1, 0, Mat(), tgt_ele, 1, &histSize, &histRange, uniform, accumulate);
+		tgt_hist.push_back(tgt_ele);
+	}
 	
 	for (int i = 0; i < src_bgr.size(); i++)
 	{
@@ -127,6 +129,7 @@ int main(int argc, char ** argv)
 	imshow(tgt_Name, tgt_image);
 	imshow("New Image", dst_image);
 
+	waitKey(0);
 	;
 	return 0;
 }
