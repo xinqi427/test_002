@@ -9,73 +9,75 @@
 using namespace cv;
 using namespace std;
 
-Mat his2cdf(const Mat &input)
+typedef Mat_<float> Array;
+typedef Mat_<uchar> ArrayU;
+
+Array his2cdf(const Array &input)
 {
-	Mat res = input.clone();
+	Array res = input.clone();
 
 	for (int i = 1; i < input.rows; i++)
 	{
-		res.at<float>(i) = res.at<float>(i - 1) + input.at<float>(i);
+		res(i) = res(i - 1) + input(i);
 	}
 
 	return res;
 }
 
-Mat cal_map(InputArray _src, InputArray _tgt)
+Array cal_map(const Array &src, const Array &tgt)
 {
 	int i = 0, j = 0;
-	Mat src = _src.getMat();
-	Mat tgt = _tgt.getMat();
-	Mat dst = Mat(src.size(), src.type());
+
+	Array dst = Array(src.size());
 	dst.setTo(0);
 
 	for (i = 0; i < src.rows; i++)
 	{
 		for (; j < tgt.rows; j++)
 		{
-			float f1 = src.at<float>(i), t1 = tgt.at<float>(j);
+			float f1 = src(i), t1 = tgt(j);
 			if (f1 < t1) {
-				dst.at<float>(i) = j;
+				dst(i) = j;
 				break;
 			}
 		}
 	}
 	for (i = 1; i < dst.rows; i++)
 	{
-		if (dst.at<float>(i) < 1)
+		if (dst(i) < 1)
 		{
-			dst.at<float>(i) = dst.at<float>(i - 1);
+			dst(i) = dst(i - 1);
 		}
 	}
 
 	return dst;
 }
 
-Mat redesign(Mat _src, Mat _map)
+ArrayU redesign(Array _src, Array _map)
 {
 	int i, j;
-	Mat _dst = Mat(_src.size(), _src.type());
+	ArrayU _dst = ArrayU(_src.size());
 	for (i = 0; i < _src.rows; i++)
 	{
 		for (j = 0; j < _src.cols; j++)
 		{
-			int k = _map.at<float>(_src.at<uchar>(i, j));
-			_dst.at<uchar>(i, j) = k;
+			int k = _map(_src(i, j));
+			_dst(i, j) = k;
 		}
 	}
 
 	return _dst;
 }
 
-Mat compute_map(Mat src_single, Mat src_hist, Mat tgt_hist)
+Array compute_map(Array src_single, Array src_hist, Array tgt_hist)
 {
-	Mat src_cdf = his2cdf(src_hist);
-	Mat tgt_cdf = his2cdf(tgt_hist);
-	normalize(src_cdf, src_cdf, 0, 1, NORM_MINMAX, -1, Mat());
-	normalize(tgt_cdf, tgt_cdf, 0, 1, NORM_MINMAX, -1, Mat());
+	Array src_cdf = his2cdf(src_hist);
+	Array tgt_cdf = his2cdf(tgt_hist);
+	normalize(src_cdf, src_cdf, 0, 1, NORM_MINMAX, -1, Array());
+	normalize(tgt_cdf, tgt_cdf, 0, 1, NORM_MINMAX, -1, Array());
 
-	Mat dst = cal_map(src_cdf, tgt_cdf);
-	Mat new_single = redesign(src_single, dst);
+	Array dst = cal_map(src_cdf, tgt_cdf);
+	Array new_single = redesign(src_single, dst);
 	return new_single;
 }
 
@@ -95,26 +97,24 @@ int main(int argc, char ** argv)
 		printf("No Image Data \n");
 		return -1;
 	}
-	dst_image.create(src_image.rows, src_image.cols, CV_8UC1);
+	dst_image.create(src_image.rows, src_image.cols, CV_8UC1);	
 
-	
-
-	vector<Mat> src_bgr, tgt_bgr, dst_bgr;	// split into 3 channels
+	vector<ArrayU> src_bgr, tgt_bgr, dst_bgr;	// split into 3 channels
 	split(src_image, src_bgr);
 	split(tgt_image, tgt_bgr);
 
 	bool uniform = true, accumulate = false;
 
-	// Mat src_b, src_g, src_r, tgt_b, tgt_g, tgt_r;	
+	// Array src_b, src_g, src_r, tgt_b, tgt_g, tgt_r;	
 	// calculate the hist for each channel
-	vector<Mat> src_hist, tgt_hist;
+	vector<Array> src_hist, tgt_hist;
 	
 	for (int i = 0; i < src_bgr.size(); i++)
 	{
-		Mat src_ele, tgt_ele;
-		calcHist(&src_bgr[0], 1, 0, Mat(), src_ele, 1, &histSize, &histRange, uniform, accumulate);
+		Array src_ele, tgt_ele;
+		calcHist(&src_bgr[i], 1, 0, Array(), src_ele, 1, &histSize, &histRange, uniform, accumulate);
 		src_hist.push_back(src_ele);
-		calcHist(&tgt_bgr[0], 1, 0, Mat(), tgt_ele, 1, &histSize, &histRange, uniform, accumulate);
+		calcHist(&tgt_bgr[i], 1, 0, Array(), tgt_ele, 1, &histSize, &histRange, uniform, accumulate);
 		tgt_hist.push_back(tgt_ele);
 	}
 	
@@ -130,7 +130,6 @@ int main(int argc, char ** argv)
 	imshow("New Image", dst_image);
 
 	waitKey(0);
-	;
 	return 0;
 }
 
