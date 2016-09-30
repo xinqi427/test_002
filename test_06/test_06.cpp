@@ -97,7 +97,7 @@ int main(int argc, char ** argv)
 		printf("No Image Data \n");
 		return -1;
 	}
-	dst_image.create(src_image.rows, src_image.cols, CV_8UC1);	
+	dst_image.create(src_image.rows, src_image.cols, CV_8UC3);	
 
 	vector<ArrayU> src_bgr, tgt_bgr, dst_bgr;	// split into 3 channels
 	split(src_image, src_bgr);
